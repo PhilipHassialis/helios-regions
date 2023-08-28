@@ -1,27 +1,40 @@
+import fs from "fs";
+
+const OUTPUTFILE = "output.csv";
+
 async function getTableNumbers() {
+  const allNumsURL = `http://helio.mssl.ucl.ac.uk/helio-vo/solar_activity/arstats/`;
+  const resp = await fetch(allNumsURL);
+  const respText = await resp.text();
+  const textLines = respText.split("\n");
+  const arNumbers = [];
+  const startMark = "Active Region ";
 
-    const allNumsURL = `http://helio.mssl.ucl.ac.uk/helio-vo/solar_activity/arstats/`;
-    const resp = await fetch(allNumsURL);
-    const respText = await resp.text();
-    const textLines = respText.split("\n");
-    const arNumbers = [];
-    const startMark = "Active Region ";
-
-    for (let line of textLines) {
-        if (line.includes("<b>")) {
-            arNumbers.push(line.substring(line.indexOf(startMark)+startMark.length, line.indexOf("</b>")));
-        } 
+  for (let line of textLines) {
+    if (line.includes("<b>")) {
+      arNumbers.push(
+        line.substring(
+          line.indexOf(startMark) + startMark.length,
+          line.indexOf("</b>")
+        )
+      );
     }
+  }
 
-    console.log(`Found total ${arNumbers.length} regions`);
+  console.log(`Found total ${arNumbers.length} regions`);
 
-    for (let arNumber of arNumbers) {
-        await scrapTable(arNumber)
-    }
+  fs.writeFileSync(
+    OUTPUTFILE,
+    "AR,DATE,TYP,AREA,NSPOT,ZMCINT,MCLASS,C,M,X,TOTAL,SMON\n"
+  );
+
+  for (let arNumber of arNumbers) {
+    await scrapTable(arNumber);
+  }
 }
 
-
 async function scrapTable(arNumber) {
+  console.log(`Processing Active Region ${arNumber}`);
   const url = `http://helio.mssl.ucl.ac.uk/helio-vo/solar_activity/arstats/ar_data/nar_${arNumber}_table.html`;
   const resp = await fetch(url);
   const respText = await resp.text();
@@ -71,14 +84,11 @@ async function scrapTable(arNumber) {
     }
   }
 
-  if (results.length > 0) {
-    results[0] = results[0].replace(arNumber, "AR");
-  }
+  results.splice(0,1);
 
   for (let resultLine of results) {
-    console.log(resultLine);
+    fs.appendFileSync(OUTPUTFILE, `${resultLine}\n`);
   }
 }
 
 await getTableNumbers();
-
