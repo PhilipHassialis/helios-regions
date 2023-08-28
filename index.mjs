@@ -14,11 +14,15 @@ async function getTableNumbers() {
     }
 
     console.log(`Found total ${arNumbers.length} regions`);
+
+    for (let arNumber of arNumbers) {
+        await scrapTable(arNumber)
+    }
 }
 
 
-async function scrapTable(tableNumber) {
-  const url = `http://helio.mssl.ucl.ac.uk/helio-vo/solar_activity/arstats/ar_data/nar_${tableNumber}_table.html`;
+async function scrapTable(arNumber) {
+  const url = `http://helio.mssl.ucl.ac.uk/helio-vo/solar_activity/arstats/ar_data/nar_${arNumber}_table.html`;
   const resp = await fetch(url);
   const respText = await resp.text();
   const textLines = respText.split("\n");
@@ -35,7 +39,7 @@ async function scrapTable(tableNumber) {
     }
     if (tableBegin) {
       if (line.includes("<tr")) {
-        resultLine = `${tableNumber},`;
+        resultLine = `${arNumber},`;
       }
       if (line.includes("<td")) {
         let cellContents = line.substring(
@@ -68,7 +72,7 @@ async function scrapTable(tableNumber) {
   }
 
   if (results.length > 0) {
-    results[0] = results[0].replace(tableNumber, "AR");
+    results[0] = results[0].replace(arNumber, "AR");
   }
 
   for (let resultLine of results) {
@@ -78,6 +82,3 @@ async function scrapTable(tableNumber) {
 
 await getTableNumbers();
 
-//await scrapTable(13371);
-
-//console.log(respText);
