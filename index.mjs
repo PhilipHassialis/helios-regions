@@ -1,16 +1,27 @@
+async function getTableNumbers() {
 
+    const allNumsURL = `http://helio.mssl.ucl.ac.uk/helio-vo/solar_activity/arstats/`;
+    const resp = await fetch(allNumsURL);
+    const respText = await resp.text();
+    const textLines = respText.split("\n");
+    const arNumbers = [];
+    const startMark = "Active Region ";
+
+    for (let line of textLines) {
+        if (line.includes("<b>")) {
+            arNumbers.push(line.substring(line.indexOf(startMark)+startMark.length, line.indexOf("</b>")));
+        } 
+    }
+
+    console.log(`Found total ${arNumbers.length} regions`);
+}
 
 
 async function scrapTable(tableNumber) {
   const url = `http://helio.mssl.ucl.ac.uk/helio-vo/solar_activity/arstats/ar_data/nar_${tableNumber}_table.html`;
-
   const resp = await fetch(url);
-
   const respText = await resp.text();
-
   const textLines = respText.split("\n");
-
-  console.log(`Scraped ${textLines.length}`);
 
   const results = [];
   let tableBegin = false;
@@ -65,6 +76,8 @@ async function scrapTable(tableNumber) {
   }
 }
 
-await scrapTable(13371);
+await getTableNumbers();
+
+//await scrapTable(13371);
 
 //console.log(respText);
